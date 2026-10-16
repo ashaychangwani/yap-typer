@@ -23,7 +23,22 @@ Open <http://127.0.0.1:4173> in your browser. Keep the terminal open while using
 
 Sessions are saved in the `data/` folder as one readable JSON file per session. The brain dump is in `dumpText`, and checklist items are in `tasks`. You can also download a session from the app. Set `YAP_TYPER_DATA_DIR` to save session files elsewhere.
 
-The server listens only on `127.0.0.1`, so the app is for use on the computer where it is running.
+When run directly, the server listens only on `127.0.0.1`. The Docker image listens inside its container on all interfaces; the command below publishes its port only to your computer.
+
+## Docker
+
+GitHub Actions builds and publishes the image for Intel and ARM64 machines whenever `main` changes. To run the published image while keeping your session files in this folder:
+
+```sh
+mkdir -p data
+docker run --rm --name yap-typer \
+  --publish 127.0.0.1:4173:4173 \
+  --mount "type=bind,source=$(pwd)/data,target=/data" \
+  --user "$(id -u):$(id -g)" \
+  ghcr.io/ashaychangwani/yap-typer:latest
+```
+
+Then open <http://127.0.0.1:4173>. The bind mount keeps your JSON sessions in `data/` after the container stops. To build locally instead, run `docker build -t yap-typer .` and replace the image name in the command above with `yap-typer`.
 
 ## License
 

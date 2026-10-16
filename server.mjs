@@ -7,6 +7,7 @@ import { fileURLToPath } from 'node:url';
 const root = dirname(fileURLToPath(import.meta.url));
 const dataDir = process.env.YAP_TYPER_DATA_DIR || join(root, 'data');
 const port = Number(process.env.PORT || 4173);
+const host = process.env.HOST || '127.0.0.1';
 const publicFiles = {
   '/': ['index.html', 'text/html; charset=utf-8'],
   '/app.js': ['app.js', 'text/javascript; charset=utf-8'],
@@ -213,7 +214,7 @@ const server = http.createServer(async (req, res) => {
   }
 });
 
-server.listen(port, '127.0.0.1', () => {
-  console.log(`Yap Typer is open at http://127.0.0.1:${port}`);
+server.listen(port, host, () => {
+  console.log(`Yap Typer is listening at http://${host}:${port}`);
   console.log(`Session files: ${dataDir}`);
 });

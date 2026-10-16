@@ -1,0 +1,55 @@
+name: Build and publish Docker image
+
+"on":
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  IMAGE_NAME: ghcr.io/ashaychangwani/yap-typer
+  DOCKER_BUILD_RECORD_UPLOAD: "false"
+
+jobs:
+  publish:
+    if: ${{ github.event.repository.private == false }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v6
+
+      - name: Check JavaScript
+        run: npm run check
+
+      - name: Smoke test container
+        run: |
+          docker build --tag yap-typer:smoke .
+          docker run --detach --name yap-typer-smoke --publish 127.0.0.1:4173:4173 yap-typer:smoke
+          trap 'docker stop yap-typer-smoke' EXIT
+          curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:4173/ > /dev/null
+
+      - name: Set up QEMU
+        uses: docker/setup-qemu-action@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v4
+
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v4
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Build and publish
+        uses: docker/build-push-action@v7
+        with:
+          context: .
+          platforms: linux/amd64,linux/arm64
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:sha-${{ github.sha }}

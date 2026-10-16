@@ -1,0 +1,7 @@
+.git
+.github
+assets
+data
+node_modules
+README.md
+.DS_Store
