@@ -6,7 +6,8 @@ const ui = {
   timerNote: $('#timer-note'), timerCard: $('.timer-card'), dumpStage: $('#dump-stage'),
   dump: $('#dump-input'), dumpStatus: $('#dump-status'), todoStage: $('#todo-stage'),
   todo: $('#todo-input'), todoStatus: $('#todo-status'), checklistStage: $('#checklist-stage'),
-  tasks: $('#task-list'), progress: $('#task-progress'), dialog: $('#settings-dialog'),
+  tasks: $('#task-list'), progress: $('#task-progress'), addTask: $('#new-task-input'),
+  addTaskButton: $('#add-task-button'), dialog: $('#settings-dialog'),
   dumpMinutes: $('#dump-minutes'), todoMinutes: $('#todo-minutes'), toast: $('#toast'),
 };
 
@@ -110,7 +111,7 @@ function renderTasks() {
   if (!tasks.length) {
     const empty = document.createElement('div');
     empty.className = 'no-tasks';
-    empty.textContent = 'No tasks written for this session. Take a breath, then begin.';
+    empty.textContent = 'No tasks yet. Add one below when you are ready.';
     ui.tasks.append(empty);
     return;
   }
@@ -146,6 +147,29 @@ function renderTasks() {
     ui.tasks.append(label);
   }
 }
+
+$('#add-task-form').addEventListener('submit', event => {
+  event.preventDefault();
+  if (!active || stage(active) !== 'checklist') return;
+  const text = ui.addTask.value.trim();
+  if (!text) return;
+  const id = active.id;
+  ui.addTask.disabled = true;
+  ui.addTaskButton.disabled = true;
+  taskPromise = taskPromise.then(async () => {
+    const session = await api(`/sessions/${id}/tasks`, { method: 'POST', body: { text } });
+    if (active?.id === id) {
+      active = session;
+      ui.addTask.value = '';
+      renderTasks();
+      loadHistory();
+      ui.addTask.focus();
+    }
+  }).catch(error => notify(error.message)).finally(() => {
+    ui.addTask.disabled = false;
+    ui.addTaskButton.disabled = false;
+  });
+});
 
 function tick() {
   if (!active) return;

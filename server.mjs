@@ -174,6 +174,17 @@ async function api(req, res, url) {
       return send(res, 200, session);
     }
 
+    if (parts[3] === 'tasks' && parts.length === 4 && req.method === 'POST') {
+      if (phase(session) !== 'checklist') fail(409, 'The checklist is not ready yet.');
+      const { text } = await bodyJson(req);
+      if (typeof text !== 'string' || !text.trim() || text.trim().length > 500 || /[\r\n]/.test(text)) {
+        fail(400, 'Enter one task, up to 500 characters.');
+      }
+      session.tasks.push({ id: randomUUID(), text: text.trim(), done: false });
+      await save(session);
+      return send(res, 201, session);
+    }
+
     if (parts[3] === 'tasks' && parts.length === 5 && req.method === 'PATCH') {
       if (phase(session) !== 'checklist') fail(409, 'The checklist is not ready yet.');
       const { done } = await bodyJson(req);

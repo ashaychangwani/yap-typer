@@ -19,7 +19,7 @@ Open <http://127.0.0.1:4173> in your browser. Keep the terminal open while using
 1. Start a session and choose the two timer lengths (default: 2 minutes and 1 minute).
 2. The brain dump timer starts with your first character. Deleting, replacing, cutting, and undoing are blocked. The task list stays locked until the dump timer ends.
 3. The task list timer starts when you begin writing. Put one task on each line. You can edit the list during its timer, or finish it early.
-4. When the list timer ends, the checklist opens. Check and uncheck tasks whenever you like.
+4. When the list timer ends, the checklist opens. Check and uncheck tasks, and add new ones as they come up during your work session.
 
 Sessions are saved in the `data/` folder as one readable JSON file per session. The brain dump is in `dumpText`, and checklist items are in `tasks`. You can also download a session from the app. Set `YAP_TYPER_DATA_DIR` to save session files elsewhere.
 

@@ -71,6 +71,13 @@
         <div id="checklist-stage" class="stage-body" hidden>
           <div class="checklist-header"><span class="field-label">YOUR TASKS</span><span id="task-progress"></span></div>
           <div id="task-list" class="task-list"></div>
+          <form id="add-task-form" class="add-task-form">
+            <label for="new-task-input" class="field-label">ADD A TASK</label>
+            <div class="add-task-row">
+              <input id="new-task-input" type="text" placeholder="Something else to do…" maxlength="500" autocomplete="off" required>
+              <button id="add-task-button" class="primary-button" type="submit">Add task <span>＋</span></button>
+            </div>
+          </form>
           <div class="reflection"><span aria-hidden="true">✳</span><div><strong>Your mind dump is saved.</strong><p>Keep this page open while you work, or return to it later. Your checklist stays here.</p></div></div>
         </div>
       </section>
