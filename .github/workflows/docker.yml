@@ -29,7 +29,10 @@ jobs:
           docker build --tag yap-typer:smoke .
           docker run --detach --name yap-typer-smoke --publish 127.0.0.1:4173:4173 yap-typer:smoke
           trap 'docker stop yap-typer-smoke' EXIT
-          curl --fail --retry 10 --retry-delay 1 --retry-connrefused http://127.0.0.1:4173/ > /dev/null
+          if ! curl --fail --silent --show-error --retry 10 --retry-delay 1 --retry-all-errors http://127.0.0.1:4173/ > /dev/null; then
+            docker logs yap-typer-smoke
+            exit 1
+          fi
 
       - name: Set up QEMU
         uses: docker/setup-qemu-action@v4
