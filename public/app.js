@@ -163,11 +163,11 @@ $('#add-task-form').addEventListener('submit', event => {
       ui.addTask.value = '';
       renderTasks();
       loadHistory();
-      ui.addTask.focus();
     }
   }).catch(error => notify(error.message)).finally(() => {
     ui.addTask.disabled = false;
     ui.addTaskButton.disabled = false;
+    if (active?.id === id && stage(active) === 'checklist') ui.addTask.focus();
   });
 });
 
