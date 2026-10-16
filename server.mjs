@@ -1,6 +1,6 @@
 import http from 'node:http';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, readdir, rename, writeFile } from 'node:fs/promises';
+import { mkdir, readFile, readdir, rename, rm, writeFile } from 'node:fs/promises';
 import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -16,6 +16,7 @@ const publicFiles = {
 };
 
 await mkdir(dataDir, { recursive: true });
+const temporarySessions = new Map();
 
 function send(res, status, body, type = 'application/json; charset=utf-8') {
   res.writeHead(status, {
@@ -51,11 +52,17 @@ function sessionPath(id) {
 }
 
 async function save(session) {
+  session.updatedAt = new Date().toISOString();
+  const hasContent = Boolean(session.dumpText.trim() || session.todoDraft.trim() || session.tasks.length);
+  if (!hasContent) {
+    temporarySessions.set(session.id, session);
+    return;
+  }
   const path = sessionPath(session.id);
   const temp = `${path}.${randomUUID()}.tmp`;
-  session.updatedAt = new Date().toISOString();
   await writeFile(temp, `${JSON.stringify(session, null, 2)}\n`);
   await rename(temp, path);
+  temporarySessions.delete(session.id);
 }
 
 async function read(id) {
@@ -64,7 +71,14 @@ async function read(id) {
     if (settle(session)) await save(session);
     return session;
   } catch (error) {
-    if (error.code === 'ENOENT') fail(404, 'Session not found.');
+    if (error.code === 'ENOENT') {
+      const temporary = temporarySessions.get(id);
+      if (temporary) {
+        if (settle(temporary)) await save(temporary);
+        return temporary;
+      }
+      fail(404, 'Session not found.');
+    }
     throw error;
   }
 }
@@ -128,12 +142,18 @@ async function api(req, res, url) {
         todoStartedAt: null, todoEndsAt: null, todoFinishedAt: null,
         todoDraft: '', tasks: [],
       };
-      await save(session);
+      temporarySessions.set(session.id, session);
       return send(res, 201, session);
     }
   }
 
   if (parts.length >= 3 && parts[1] === 'sessions') {
+    if (parts.length === 3 && req.method === 'DELETE') {
+      const path = sessionPath(parts[2]);
+      temporarySessions.delete(parts[2]);
+      await rm(path, { force: true });
+      return send(res, 200, { deleted: true });
+    }
     const session = await read(parts[2]);
     if (parts.length === 3 && req.method === 'GET') return send(res, 200, session);
 

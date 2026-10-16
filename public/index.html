@@ -23,7 +23,10 @@
     <main class="main">
       <header class="topbar">
         <span id="today-label"></span>
-        <button id="download-button" class="text-button" type="button" hidden>Download session ↗</button>
+        <div class="topbar-actions">
+          <button id="delete-button" class="text-button delete-current" type="button" hidden>Delete session</button>
+          <button id="download-button" class="text-button" type="button" hidden>Download session ↗</button>
+        </div>
       </header>
 
       <section id="empty-view" class="empty-view" hidden>

@@ -1,7 +1,7 @@
 const $ = selector => document.querySelector(selector);
 const ui = {
   today: $('#today-label'), list: $('#session-list'), empty: $('#empty-view'), session: $('#session-view'),
-  download: $('#download-button'), eyebrow: $('#stage-eyebrow'), title: $('#stage-title'),
+  download: $('#download-button'), delete: $('#delete-button'), eyebrow: $('#stage-eyebrow'), title: $('#stage-title'),
   description: $('#stage-description'), timer: $('#timer-value'), timerLabel: $('#timer-label'),
   timerNote: $('#timer-note'), timerCard: $('.timer-card'), dumpStage: $('#dump-stage'),
   dump: $('#dump-input'), dumpStatus: $('#dump-status'), todoStage: $('#todo-stage'),
@@ -71,6 +71,7 @@ function renderSession(focus = false) {
   ui.empty.hidden = Boolean(active);
   ui.session.hidden = !active;
   ui.download.hidden = !active;
+  ui.delete.hidden = !active;
   if (!active) return;
 
   const current = stage(active);
@@ -332,16 +333,26 @@ async function loadHistory() {
       return sessions;
     }
     for (const item of sessions) {
+      const row = document.createElement('div');
+      row.className = `session-row${item.id === active?.id ? ' active' : ''}`;
       const button = document.createElement('button');
       button.type = 'button';
-      button.className = `session-link${item.id === active?.id ? ' active' : ''}`;
+      button.className = 'session-link';
       const date = document.createElement('span');
       date.textContent = new Intl.DateTimeFormat(undefined, { month: 'short', day: 'numeric', hour: 'numeric', minute: '2-digit' }).format(new Date(item.createdAt));
       const state = document.createElement('small');
       state.textContent = item.phase === 'checklist' ? `${item.doneCount}/${item.taskCount} done` : item.phase === 'todo' ? 'Tasks' : 'Writing';
       button.append(date, state);
       button.addEventListener('click', () => openSession(item.id));
-      ui.list.append(button);
+      const remove = document.createElement('button');
+      remove.type = 'button';
+      remove.className = 'delete-session';
+      remove.textContent = '×';
+      remove.setAttribute('aria-label', 'Delete session');
+      remove.title = 'Delete session';
+      remove.addEventListener('click', () => deleteSession(item.id));
+      row.append(button, remove);
+      ui.list.append(row);
     }
     return sessions;
   } catch (error) {
@@ -349,6 +360,25 @@ async function loadHistory() {
     return [];
   }
 }
+
+async function deleteSession(id) {
+  try {
+    await flushWrites();
+    await api(`/sessions/${id}`, { method: 'DELETE' });
+    if (active?.id === id) {
+      active = null;
+      renderSession();
+    } else {
+      await loadHistory();
+    }
+  } catch (error) {
+    notify(error.message);
+  }
+}
+
+ui.delete.addEventListener('click', () => {
+  if (active) deleteSession(active.id);
+});
 
 async function openSession(id) {
   try {
@@ -405,6 +435,5 @@ ui.download.addEventListener('click', async () => {
 });
 
 setInterval(tick, 250);
-const sessions = await loadHistory();
-if (sessions.length) await openSession(sessions[0].id);
-else renderSession();
+await loadHistory();
+renderSession();
