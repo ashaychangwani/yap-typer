@@ -1,0 +1,94 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f6f4ee">
+  <title>Yap Typer</title>
+  <link rel="stylesheet" href="/styles.css">
+  <script src="/app.js" type="module"></script>
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>yap typer</span></div>
+      <p class="sidebar-caption">A quiet place to get it all out.</p>
+      <button id="new-session" class="new-button" type="button"><span>＋</span> New session</button>
+      <div class="sidebar-section-heading">Your sessions</div>
+      <nav id="session-list" aria-label="Previous sessions"></nav>
+      <div class="sidebar-foot">Saved on this computer as plain JSON files.</div>
+    </aside>
+
+    <main class="main">
+      <header class="topbar">
+        <span id="today-label"></span>
+        <button id="download-button" class="text-button" type="button" hidden>Download session ↗</button>
+      </header>
+
+      <section id="empty-view" class="empty-view" hidden>
+        <div class="eyebrow">A RESET FOR YOUR MIND</div>
+        <h1>Make room to focus.</h1>
+        <p>Write everything on your mind for a short stretch. When time is up, make a simple list for this work session.</p>
+        <div class="steps">
+          <div><span>01</span><strong>Brain dump</strong><small>Keep writing. No deleting or fixing.</small></div>
+          <div><span>02</span><strong>Make your list</strong><small>One task per line. Edit freely.</small></div>
+          <div><span>03</span><strong>Get to work</strong><small>Check things off as you go.</small></div>
+        </div>
+        <button id="empty-new" class="primary-button" type="button">Start a session <span>→</span></button>
+      </section>
+
+      <section id="session-view" class="session-view" hidden>
+        <div class="stage-top">
+          <div>
+            <div id="stage-eyebrow" class="eyebrow"></div>
+            <h1 id="stage-title"></h1>
+            <p id="stage-description" class="stage-description"></p>
+          </div>
+          <div class="timer-card" aria-live="polite">
+            <span id="timer-label">Time left</span>
+            <strong id="timer-value">02:00</strong>
+            <small id="timer-note"></small>
+          </div>
+        </div>
+
+        <div id="dump-stage" class="stage-body" hidden>
+          <label for="dump-input" class="field-label">LET IT OUT</label>
+          <div class="editor-wrap">
+            <textarea id="dump-input" placeholder="Start typing whatever is on your mind…" aria-label="Write-only brain dump" spellcheck="false" autocapitalize="off" autocomplete="off" autocorrect="off"></textarea>
+            <div class="editor-foot"><span id="dump-status">Your words save as you type.</span><span>No backspace. No editing. Just keep going.</span></div>
+          </div>
+        </div>
+
+        <div id="todo-stage" class="stage-body" hidden>
+          <label for="todo-input" class="field-label">THIS SESSION'S TASKS</label>
+          <div class="editor-wrap">
+            <textarea id="todo-input" placeholder="One thing to do per line…" aria-label="Tasks, one per line" spellcheck="true"></textarea>
+            <div class="editor-foot"><span id="todo-status">Your list saves as you type.</span><span>One task per line.</span></div>
+          </div>
+          <button id="finish-todo" class="primary-button finish-button" type="button">Done making my list <span>→</span></button>
+        </div>
+
+        <div id="checklist-stage" class="stage-body" hidden>
+          <div class="checklist-header"><span class="field-label">YOUR TASKS</span><span id="task-progress"></span></div>
+          <div id="task-list" class="task-list"></div>
+          <div class="reflection"><span aria-hidden="true">✳</span><div><strong>Your mind dump is saved.</strong><p>Keep this page open while you work, or return to it later. Your checklist stays here.</p></div></div>
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <dialog id="settings-dialog">
+    <form id="settings-form" method="dialog">
+      <button id="close-dialog" class="dialog-close" type="button" aria-label="Close">×</button>
+      <div class="eyebrow">NEW SESSION</div>
+      <h2>Set your pace.</h2>
+      <p>Each timer begins when you start typing in that step.</p>
+      <div class="setting-row"><label for="dump-minutes">Brain dump</label><div><input id="dump-minutes" type="number" min="1" max="60" step="1" value="2" required><span>min</span></div></div>
+      <div class="setting-row"><label for="todo-minutes">Task list</label><div><input id="todo-minutes" type="number" min="1" max="60" step="1" value="1" required><span>min</span></div></div>
+      <button class="primary-button dialog-submit" type="submit">Begin <span>→</span></button>
+    </form>
+  </dialog>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+</body>
+</html>
