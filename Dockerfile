@@ -1,7 +1,7 @@
 FROM node:24-alpine
 
 LABEL org.opencontainers.image.source="https://github.com/ashaychangwani/yap-typer" \
-      org.opencontainers.image.description="Timed brain dump and work session checklist" \
+      org.opencontainers.image.description="Shared Todo list and timed brain dump sessions" \
       org.opencontainers.image.licenses="MIT"
 
 ENV NODE_ENV=production \

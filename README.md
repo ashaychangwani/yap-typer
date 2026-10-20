@@ -1,6 +1,6 @@
 # Yap Typer
 
-A small local app for a timed, write-only brain dump followed by a timed task list. It uses no external packages or accounts.
+A small local app for a shared Todo list and timed, write-only brain dump sessions. It uses no external packages or accounts.
 
 ![Yap Typer preview](assets/preview.png)
 
@@ -16,18 +16,19 @@ Open <http://127.0.0.1:4173> in your browser. Keep the terminal open while using
 
 ## How it works
 
-1. Start a session and choose the two timer lengths (default: 2 minutes and 1 minute).
-2. The brain dump timer starts with your first character. Deleting, replacing, cutting, and undoing are blocked. The task list stays locked until the dump timer ends.
-3. The task list timer starts when you begin writing. Put one task on each line. You can edit the list during its timer, or finish it early.
-4. When the list timer ends, the checklist opens. Check and uncheck tasks, and add new ones as they come up during your work session.
+1. The app opens on your shared Todo list. Add tasks directly, check them off, or open one to edit its title and full notes. Notes stay short in the list view. Todos are grouped by their last update date, with the most recently updated first.
+2. Start a session and choose the two timer lengths (default: 2 minutes and 1 minute).
+3. The brain dump timer starts with your first character. Deleting, replacing, cutting, and undoing are blocked. The task list stays locked until the dump timer ends.
+4. The task list timer starts when you begin writing. Put one task on each line. You can edit the list during its timer, or finish it early.
+5. When the list timer ends, the checklist opens. Its tasks also appear in the shared Todo list and remain there across sessions.
 
-Sessions are saved in the `data/` folder as one readable JSON file per session. The brain dump is in `dumpText`, and checklist items are in `tasks`. You can also download a session from the app. Set `YAP_TYPER_DATA_DIR` to save session files elsewhere.
+Sessions are saved in the `data/` folder as one readable JSON file per session. The shared list is saved in `data/todos.json`. Existing session tasks are copied into it the first time the updated app starts. The brain dump is in `dumpText`, and checklist items are in `tasks`. You can also download a session from the app. Set `YAP_TYPER_DATA_DIR` to save all data files elsewhere.
 
 When run directly, the server listens only on `127.0.0.1`. The Docker image listens inside its container on all interfaces; the command below publishes its port only to your computer.
 
 ## Docker
 
-GitHub Actions builds and publishes the image for Intel and ARM64 machines whenever `main` changes. To run the published image while keeping your session files in this folder:
+GitHub Actions builds and publishes the image for Intel and ARM64 machines whenever `main` changes. To run the published image while keeping your Todo list and session files in this folder:
 
 ```sh
 mkdir -p data

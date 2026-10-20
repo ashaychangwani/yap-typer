@@ -9,9 +9,15 @@ const ui = {
   tasks: $('#task-list'), progress: $('#task-progress'), addTask: $('#new-task-input'),
   addTaskButton: $('#add-task-button'), dialog: $('#settings-dialog'),
   dumpMinutes: $('#dump-minutes'), todoMinutes: $('#todo-minutes'), toast: $('#toast'),
+  globalView: $('#global-todos-view'), globalList: $('#global-todo-list'), globalCount: $('#global-todo-count'),
+  globalInput: $('#global-new-task'), showTodos: $('#show-todos'), detailsDialog: $('#todo-details-dialog'),
+  detailTitle: $('#todo-detail-title'), detailNotes: $('#todo-detail-notes'), detailDelete: $('#delete-global-todo'),
 };
 
 let active = null;
+let activeView = 'todos';
+let globalTodos = [];
+let editingTodoId = null;
 let acceptedDump = '';
 let dumpPending = null;
 let todoPending = null;
@@ -41,6 +47,145 @@ function notify(message) {
   toastTimeout = setTimeout(() => ui.toast.classList.remove('show'), 4000);
 }
 
+function setView(view) {
+  activeView = view;
+  ui.globalView.hidden = view !== 'todos';
+  ui.empty.hidden = view !== 'session' || Boolean(active);
+  ui.session.hidden = view !== 'session' || !active;
+  ui.download.hidden = view !== 'session' || !active;
+  ui.delete.hidden = view !== 'session' || !active;
+  ui.showTodos.classList.toggle('active', view === 'todos');
+  for (const row of ui.list.querySelectorAll('.session-row')) {
+    row.classList.toggle('active', view === 'session' && row.dataset.id === active?.id);
+  }
+}
+
+function dateKey(value) {
+  const date = new Date(value);
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}-${String(date.getDate()).padStart(2, '0')}`;
+}
+
+function renderGlobalTodos() {
+  ui.globalList.replaceChildren();
+  const done = globalTodos.filter(todo => todo.done).length;
+  ui.globalCount.textContent = `${globalTodos.length - done} open · ${done} done`;
+  if (!globalTodos.length) {
+    const empty = document.createElement('div');
+    empty.className = 'global-empty';
+    empty.textContent = 'No Todos yet. Add your first one above, or start a session.';
+    ui.globalList.append(empty);
+    return;
+  }
+  let lastDate = '';
+  for (const todo of globalTodos) {
+    const key = dateKey(todo.updatedAt);
+    if (key !== lastDate) {
+      const heading = document.createElement('h2');
+      heading.className = 'todo-date-heading';
+      heading.textContent = new Intl.DateTimeFormat(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }).format(new Date(todo.updatedAt));
+      ui.globalList.append(heading);
+      lastDate = key;
+    }
+    const row = document.createElement('article');
+    row.className = `global-todo${todo.done ? ' done' : ''}`;
+    const box = document.createElement('input');
+    box.type = 'checkbox';
+    box.checked = todo.done;
+    box.setAttribute('aria-label', `Mark ${todo.text} ${todo.done ? 'incomplete' : 'complete'}`);
+    box.addEventListener('change', async () => {
+      box.disabled = true;
+      try {
+        await api(`/todos/${todo.id}`, { method: 'PATCH', body: { done: box.checked } });
+        await loadGlobalTodos();
+        if (active?.id === todo.sessionId) active = await api(`/sessions/${active.id}`);
+      } catch (error) {
+        box.checked = !box.checked;
+        box.disabled = false;
+        notify(error.message);
+      }
+    });
+    const content = document.createElement('button');
+    content.type = 'button';
+    content.className = 'global-todo-content';
+    const title = document.createElement('strong');
+    title.textContent = todo.text;
+    const notes = document.createElement('span');
+    notes.className = `todo-notes-preview${todo.notes ? '' : ' empty'}`;
+    notes.textContent = todo.notes || 'Add notes…';
+    content.append(title, notes);
+    content.addEventListener('click', () => openTodoDetails(todo));
+    row.append(box, content);
+    ui.globalList.append(row);
+  }
+}
+
+async function loadGlobalTodos() {
+  globalTodos = await api('/todos');
+  renderGlobalTodos();
+}
+
+function openTodoDetails(todo) {
+  editingTodoId = todo.id;
+  ui.detailTitle.value = todo.text;
+  ui.detailNotes.value = todo.notes || '';
+  ui.detailsDialog.showModal();
+  ui.detailNotes.focus();
+}
+
+ui.showTodos.addEventListener('click', async () => {
+  await flushWrites();
+  setView('todos');
+  try { await loadGlobalTodos(); } catch (error) { notify(error.message); }
+});
+
+$('#global-add-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  const text = ui.globalInput.value.trim();
+  if (!text) return;
+  const button = event.currentTarget.querySelector('button');
+  button.disabled = true;
+  try {
+    await api('/todos', { method: 'POST', body: { text } });
+    ui.globalInput.value = '';
+    await loadGlobalTodos();
+    ui.globalInput.focus();
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$('#close-todo-details').addEventListener('click', () => ui.detailsDialog.close());
+$('#todo-details-form').addEventListener('submit', async event => {
+  event.preventDefault();
+  if (!editingTodoId || !event.currentTarget.reportValidity()) return;
+  const button = event.currentTarget.querySelector('[type="submit"]');
+  button.disabled = true;
+  try {
+    await api(`/todos/${editingTodoId}`, { method: 'PATCH', body: { text: ui.detailTitle.value, notes: ui.detailNotes.value } });
+    ui.detailsDialog.close();
+    await loadGlobalTodos();
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    button.disabled = false;
+  }
+});
+ui.detailDelete.addEventListener('click', async () => {
+  if (!editingTodoId) return;
+  ui.detailDelete.disabled = true;
+  try {
+    await api(`/todos/${editingTodoId}`, { method: 'DELETE' });
+    ui.detailsDialog.close();
+    await loadGlobalTodos();
+  } catch (error) {
+    notify(error.message);
+  } finally {
+    ui.detailDelete.disabled = false;
+  }
+});
+
 function stage(session) {
   if (!session.dumpFinishedAt) return 'dump';
   if (!session.todoFinishedAt) return 'todo';
@@ -61,17 +206,14 @@ function updateSession(session) {
   const oldStage = stage(active);
   active = session;
   if (stage(active) !== oldStage) {
-    renderSession(true);
+    if (activeView === 'session') renderSession(true);
     loadHistory();
   }
   tick();
 }
 
 function renderSession(focus = false) {
-  ui.empty.hidden = Boolean(active);
-  ui.session.hidden = !active;
-  ui.download.hidden = !active;
-  ui.delete.hidden = !active;
+  setView('session');
   if (!active) return;
 
   const current = stage(active);
@@ -334,7 +476,8 @@ async function loadHistory() {
     }
     for (const item of sessions) {
       const row = document.createElement('div');
-      row.className = `session-row${item.id === active?.id ? ' active' : ''}`;
+      row.className = `session-row${activeView === 'session' && item.id === active?.id ? ' active' : ''}`;
+      row.dataset.id = item.id;
       const button = document.createElement('button');
       button.type = 'button';
       button.className = 'session-link';
@@ -436,4 +579,5 @@ ui.download.addEventListener('click', async () => {
 
 setInterval(tick, 250);
 await loadHistory();
-renderSession();
+try { await loadGlobalTodos(); } catch (error) { notify(error.message); }
+setView('todos');

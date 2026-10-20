@@ -14,6 +14,7 @@
     <aside class="sidebar">
       <div class="brand"><span class="brand-mark" aria-hidden="true">✳</span><span>yap typer</span></div>
       <p class="sidebar-caption">A quiet place to get it all out.</p>
+      <button id="show-todos" class="sidebar-todos active" type="button">✓ <span>All Todos</span></button>
       <button id="new-session" class="new-button" type="button"><span>＋</span> New session</button>
       <div class="sidebar-section-heading">Your sessions</div>
       <nav id="session-list" aria-label="Previous sessions"></nav>
@@ -28,6 +29,23 @@
           <button id="download-button" class="text-button" type="button" hidden>Download session ↗</button>
         </div>
       </header>
+
+      <section id="global-todos-view" class="global-todos-view">
+        <div class="todos-intro">
+          <div class="eyebrow">YOUR SHARED LIST</div>
+          <h1>All your Todos.</h1>
+          <p>Everything you need to do, across all your sessions. Recently updated tasks appear first.</p>
+        </div>
+        <form id="global-add-form" class="global-add-form">
+          <label for="global-new-task" class="field-label">ADD A TODO</label>
+          <div class="add-task-row">
+            <input id="global-new-task" type="text" placeholder="What needs doing?" maxlength="500" autocomplete="off" required>
+            <button class="primary-button" type="submit">Add Todo <span>＋</span></button>
+          </div>
+        </form>
+        <div id="global-todo-count" class="global-todo-count"></div>
+        <div id="global-todo-list" class="global-todo-list"></div>
+      </section>
 
       <section id="empty-view" class="empty-view" hidden>
         <div class="eyebrow">A RESET FOR YOUR MIND</div>
@@ -97,6 +115,22 @@
       <div class="setting-row"><label for="dump-minutes">Brain dump</label><div><input id="dump-minutes" type="number" min="1" max="60" step="1" value="2" required><span>min</span></div></div>
       <div class="setting-row"><label for="todo-minutes">Task list</label><div><input id="todo-minutes" type="number" min="1" max="60" step="1" value="1" required><span>min</span></div></div>
       <button class="primary-button dialog-submit" type="submit">Begin <span>→</span></button>
+    </form>
+  </dialog>
+
+  <dialog id="todo-details-dialog" class="todo-details-dialog">
+    <form id="todo-details-form">
+      <button id="close-todo-details" class="dialog-close" type="button" aria-label="Close">×</button>
+      <div class="eyebrow">TODO DETAILS</div>
+      <h2>Edit Todo</h2>
+      <label for="todo-detail-title" class="field-label">TASK</label>
+      <input id="todo-detail-title" type="text" maxlength="500" required>
+      <label for="todo-detail-notes" class="field-label">NOTES</label>
+      <textarea id="todo-detail-notes" placeholder="Add the details you want to keep with this Todo…" maxlength="100000"></textarea>
+      <div class="todo-detail-actions">
+        <button id="delete-global-todo" class="text-button delete-current" type="button">Delete Todo</button>
+        <button class="primary-button" type="submit">Save changes <span>→</span></button>
+      </div>
     </form>
   </dialog>
 
